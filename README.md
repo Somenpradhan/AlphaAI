@@ -31,7 +31,7 @@ Decisions that make this implementation different and production-oriented includ
 ---
 
 ## Working Pipeline
- flowchart LR
+``` flowchart LR
     U["User<br/>Natural Language Request"] --> R["Router Agent<br/>Classify Intent"]
 
     R -->|Conversation| G["General Agent<br/>Normal Chat / Knowledge"]
@@ -59,7 +59,7 @@ Decisions that make this implementation different and production-oriented includ
     style S fill:#161b22,stroke:#58a6ff,color:#fff
     style F fill:#161b22,stroke:#3fb950,color:#fff
     style OUT fill:#161b22,stroke:#3fb950,color:#fff
-
+```
   
 High-level design:
 - The architecture follows an agent pipeline model implemented with the Google ADK agent primitives. The runtime entry point is the root LlmAgent (named `root_agent`) that acts purely as a Router.

@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Virtual Environment
+.venv/
+venv/
+
+# Environment variables — use .env.example as the template
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloud credentials
+key.json
+*.json
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+build/

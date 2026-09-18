@@ -30,97 +30,37 @@ Decisions that make this implementation different and production-oriented includ
 
 ---
 
-## Architecture
-                         ┌──────────────────────┐
-                         │       USER           │
-                         │ "Add gym at 6 PM"    │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │   GOOGLE ADK        │
-                         │   Runtime / Server   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                    ┌──────────────────────────────┐
-                    │      ROUTER AGENT            │
-                    │       root_agent             │
-                    │                              │
-                    │ What type of request?        │
-                    └─────────────┬────────────────┘
-                                  │
-                ┌─────────────────┴──────────────────┐
-                │                                    │
-                ▼                                    ▼
-       ┌──────────────────┐              ┌──────────────────────┐
-       │ GENERAL AGENT    │              │  SEQUENTIAL AGENT   │
-       │                  │              │                      │
-       │ Normal questions │              │ Data / task request  │
-       │ Chat / knowledge │              │                      │
-       └────────┬─────────┘              └──────────┬───────────┘
-                │                                   │
-                │                                   ▼
-                │                         ┌──────────────────┐
-                │                         │  PLANNER AGENT   │
-                │                         │                  │
-                │                         │ Understand intent│
-                │                         │ Validate input   │
-                │                         │ Select tool      │
-                │                         └────────┬─────────┘
-                │                                  │
-                │                                  ▼
-                │                         ┌──────────────────┐
-                │                         │ DETERMINISTIC    │
-                │                         │ TOOLS            │
-                │                         │                  │
-                │                         │ Create task      │
-                │                         │ Edit task        │
-                │                         │ Delete task      │
-                │                         │ Schedule event   │
-                │                         │ Save note        │
-                │                         │ Daily plan       │
-                │                         └────────┬─────────┘
-                │                                  │
-                │                                  ▼
-                │                         ┌──────────────────┐
-                │                         │     db.py        │
-                │                         │ Firestore Layer  │
-                │                         └────────┬─────────┘
-                │                                  │
-                │                                  ▼
-                │                         ┌──────────────────┐
-                │                         │    FIRESTORE     │
-                │                         │                  │
-                │                         │ Tasks            │
-                │                         │ Events           │
-                │                         │ Notes            │
-                │                         └────────┬─────────┘
-                │                                  │
-                │                                  ▼
-                │                         ┌──────────────────┐
-                │                         │ TOOL RESULT      │
-                │                         │ state["last_     │
-                │                         │ result"]         │
-                │                         └────────┬─────────┘
-                │                                  │
-                │                                  ▼
-                │                         ┌──────────────────┐
-                │                         │ FORMATTER AGENT  │
-                │                         │                  │
-                │                         │ JSON → Human     │
-                │                         │ readable reply   │
-                │                         └────────┬─────────┘
-                │                                  │
-                └──────────────────┬───────────────┘
-                                   │
-                                   ▼
-                         ┌──────────────────────┐
-                         │   FINAL RESPONSE    │
-                         │ "Done! I've added    │
-                         │ Gym at 6:00 PM."    │
-                         └──────────────────────┘
-                         
+## Working Pipeline
+ flowchart LR
+    U["User<br/>Natural Language Request"] --> R["Router Agent<br/>Classify Intent"]
+
+    R -->|Conversation| G["General Agent<br/>Normal Chat / Knowledge"]
+    R -->|Data Operation| P["Planner Agent<br/>Intent + Validation + Tool Selection"]
+
+    P --> T["Deterministic Python Tools<br/>Task / Event / Note / Daily Plan"]
+    T --> UTIL["utils.py<br/>Time Normalization<br/>Urgency Detection"]
+    T --> DB["db.py<br/>Firestore CRUD<br/>Conflict Check"]
+    DB --> FS[("Google Cloud Firestore<br/>Tasks • Events • Notes")]
+
+    T --> S["Shared State<br/>last_result"]
+    S --> F["Formatter Agent<br/>Structured Result → Natural Language"]
+
+    G --> OUT["Final Response"]
+    F --> OUT
+
+    style U fill:#161b22,stroke:#58a6ff,color:#fff
+    style R fill:#161b22,stroke:#58a6ff,color:#fff
+    style G fill:#161b22,stroke:#3fb950,color:#fff
+    style P fill:#161b22,stroke:#d29922,color:#fff
+    style T fill:#161b22,stroke:#f0883e,color:#fff
+    style UTIL fill:#161b22,stroke:#bc8cff,color:#fff
+    style DB fill:#161b22,stroke:#79c0ff,color:#fff
+    style FS fill:#161b22,stroke:#3fb950,color:#fff
+    style S fill:#161b22,stroke:#58a6ff,color:#fff
+    style F fill:#161b22,stroke:#3fb950,color:#fff
+    style OUT fill:#161b22,stroke:#3fb950,color:#fff
+
+  
 High-level design:
 - The architecture follows an agent pipeline model implemented with the Google ADK agent primitives. The runtime entry point is the root LlmAgent (named `root_agent`) that acts purely as a Router.
 - There are three primary runtime agent behaviors:
